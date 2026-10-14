@@ -1097,6 +1097,16 @@ let lastAiQuestion = '';
 const fmt  = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 const fmt2 = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+function dashboardAccessKey() {
+  let key = '';
+  try { key = window.localStorage.getItem('criusDashboardAccessKey') || ''; } catch (e) {}
+  if (!key) {
+    key = window.prompt('Enter your Expenses Report access key:') || '';
+    if (key) { try { window.localStorage.setItem('criusDashboardAccessKey', key); } catch (e) {} }
+  }
+  return key;
+}
+
 function normalizeRecord(r) {
   return {
     locationKey:   String(r.location || '').toUpperCase(),
@@ -1412,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadInitial(isRefresh) {
   if (!isRefresh) showLoading('Loading dashboard…');
-  fetch('/api/dashboard', { headers: { 'Accept': 'application/json' } })
+  fetch('/api/dashboard', { headers: { 'Accept': 'application/json', 'X-Dashboard-Key': dashboardAccessKey() } })
     .then(async response => {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || ('Request failed (' + response.status + ')'));
@@ -2741,7 +2751,7 @@ function aiSendQuestion(question) {
 
   fetch('/api/ask', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Dashboard-Key': dashboardAccessKey() },
     body: JSON.stringify({ question: finalQuestion, records: payload, skipFast: !!skipFast })
   })
     .then(async response => {
