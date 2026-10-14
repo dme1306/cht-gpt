@@ -2679,13 +2679,7 @@ function aiFormatAnswer(text) {
   if (!text) return '';
   var s = String(text).trim();
 
-  // Fast-path: the server's fast-answer engine returns ready HTML
-  // starting with <div>. Pass it through untouched so it renders.
-  if (/^<div\b/i.test(s)) {
-    return s;
-  }
-
-  var html = s
+  // Treat all assistant output as untrusted text; escape it before formatting.\n  var html = s
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   html = html.replace(/\*(.+?)\*/g, '<i>$1</i>');
