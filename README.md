@@ -1,4 +1,6 @@
 Crius Life Science Expense Dashboard — Vercel version
+
+**Security note:** this repository is currently public, so its source code is visible. Never commit Google service-account credentials, Groq keys, or the dashboard access key. Because this app serves financial information, consider making the repository private before production. The shared access key protects the data APIs, but it is a basic shared-key gate rather than individual user accounts.
 This is the migration of the existing Apps Script dashboard to a standard website plus serverless APIs. The existing dashboard UI (charts, filters, reports, exports, and assistant panel) is retained in `public/index.html`. The `google.script.run` calls are replaced with `fetch('/api/dashboard')` and `fetch('/api/ask')`.
 Project layout
 `public/index.html` — dashboard frontend
@@ -21,9 +23,7 @@ In Vercel → Project → Settings → Environment Variables, add:
 `GOOGLE_SHEET_NAME` — `Till Sep2026` (optional; this is the default)
 Set them for Production and Preview if you want both environments to work. Do not put API keys in `public/index.html` or any frontend JavaScript.
 3. Push to GitHub and deploy
-Create a new private GitHub repository (recommended because this is financial reporting code).
-Upload all files and folders from this project, preserving the layout.
-In Vercel, choose Add New → Project, import the GitHub repository, and deploy.
+Connect this existing GitHub repository to Vercel. Since the repository is public, consider changing it to private before production. In Vercel, choose Add New → Project, import `dme1306/cht-gpt`, and deploy the `main1` branch.
 Add the environment variables before or immediately after the first deployment, then redeploy after adding/changing them.
 Open the deployment URL. The dashboard should load from `/api/dashboard`; the AI assistant calls `/api/ask`.
 Local development
