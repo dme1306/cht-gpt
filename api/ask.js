@@ -4,7 +4,7 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 function amount(value) { const n = Number(value); return Number.isFinite(n) ? n : 0; }
 function inr(value) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value); }
-function fastAnswer(question, records) {
+function fastAnswer(question, safeRecords) {
   const q = String(question || '').toLowerCase();
   const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
   let filtered = records.slice();
@@ -31,7 +31,7 @@ async function groqCall(apiKey, model, question, records) {
       temperature: 0.2,
       max_tokens: 1400,
       messages: [
-        { role: 'system', content: 'You are the expense-analysis assistant for Crius Life Science. Answer only from the supplied expense records. Do not invent figures. Currency is INR (₹). Financial year values are supplied in fy. If a calculation is requested, calculate it from the data. Be concise but show key totals and how you reached them. You may return simple HTML fragments for readable formatting; do not include scripts or event handlers.' },
+        { role: 'system', content: 'You are the expense-analysis assistant for Crius Life Science. Answer only from the supplied expense records. Do not invent figures. Currency is INR (₹). Financial year values are supplied in fy. If a calculation is requested, calculate it from the supplied data. Be concise but show key totals and how you reached them. Return plain text only; do not return HTML, scripts, or markup.' },
         { role: 'user', content: `Question: ${question}\n\nExpense records (JSON):\n${JSON.stringify(records).slice(0, 90000)}` }
       ]
     })
@@ -57,19 +57,33 @@ module.exports = async function handler(req, res) {
     const question = String(body.question || '').trim();
     const records = Array.isArray(body.records) ? body.records : [];
     if (!question) return res.status(400).json({ error: 'Please ask a question.' });
+    if (question.length > 1500) return res.status(400).json({ error: 'Please keep the question under 1,500 characters.' });
     if (!records.length) return res.status(400).json({ error: 'No expense data available. Please refresh the dashboard.' });
+    if (records.length > 20000) return res.status(413).json({ error: 'Too many expense records were sent in one request. Apply dashboard filters and try again.' });
+    // Accept only the fields used by the assistant; do not forward arbitrary client properties.
+    const allowedFields = ['fy', 'month', 'month_year', 'company', 'location', 'account', 'particulars', 'descr', 'txn_remark', 'amount'];
+    const safeRecords = records.map(record => {
+      const safe = {};
+      if (!record || typeof record !== 'object' || Array.isArray(record)) return safe;
+      for (const field of allowedFields) {
+        const value = record[field];
+        if (typeof value === 'string') safe[field] = value.slice(0, 500);
+        else if (typeof value === 'number' && Number.isFinite(value)) safe[field] = value;
+      }
+      return safe;
+    });
     if (!body.skipFast) {
-      const answer = fastAnswer(question, records);
+      const answer = fastAnswer(question, safeRecords);
       if (answer) return res.status(200).json({ answer });
     }
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'Missing GROQ_API_KEY environment variable. Add your Groq key in Vercel Project Settings → Environment Variables.' });
     try {
-      const answer = await groqCall(apiKey, PRIMARY_MODEL, question, records);
+      const answer = await groqCall(apiKey, PRIMARY_MODEL, question, safeRecords);
       return res.status(200).json({ answer });
     } catch (firstError) {
       console.warn('Primary Groq model failed; trying fallback:', firstError.message);
-      const answer = await groqCall(apiKey, FALLBACK_MODEL, question, records);
+      const answer = await groqCall(apiKey, FALLBACK_MODEL, question, safeRecords);
       return res.status(200).json({ answer });
     }
   } catch (error) {
