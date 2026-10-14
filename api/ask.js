@@ -18,7 +18,7 @@ function fastAnswer(question, records) {
   if (!filtered.length) return null;
   if (/\b(total|how much|sum|spend|spent|expenses?)\b/.test(q) && !/\b(top|highest|lowest|compare|trend|average|avg)\b/.test(q)) {
     const total = filtered.reduce((sum, r) => sum + amount(r.amount), 0);
-    return `<div><b>Total expense${company ? ' for ' + company : ''}${year ? ' in ' + year : ''}${monthIndex >= 0 ? ' for ' + months[monthIndex] : ''}</b></div><div style="font-size:24px;font-weight:700;margin:8px 0;">${inr(total)}</div><div style="font-size:12px;">${filtered.length.toLocaleString('en-IN')} transactions · average ${inr(total / filtered.length)}</div>`;
+    return `Total expense${company ? ' for ' + company : ''}${year ? ' in ' + year : ''}${monthIndex >= 0 ? ' for ' + months[monthIndex] : ''}\n${inr(total)}\n${filtered.length.toLocaleString('en-IN')} transactions · average ${inr(total / filtered.length)}`;
   }
   return null;
 }
