@@ -15,7 +15,8 @@ Keep the downloaded service-account JSON private. Never commit it to GitHub.
 2. Set environment variables in Vercel
 In Vercel → Project → Settings → Environment Variables, add:
 `GOOGLE_SERVICE_ACCOUNT_JSON` — the entire contents of the service-account JSON key, pasted as one JSON value
-`GROQ_API_KEY` — your Groq API key
+`GROQ_API_KEY` — your Groq API key (optional if you only want dashboard totals; required for AI answers beyond the built-in total shortcut)
+`DASHBOARD_ACCESS_KEY` — a long, private password that users must enter to read expense data
 `GOOGLE_SHEET_ID` — `1GtvrpKr-ONenL2Wx8XAl61NTH-eKkQDAlqSkk_x3tbk` (optional; this is the default)
 `GOOGLE_SHEET_NAME` — `Till Sep2026` (optional; this is the default)
 Set them for Production and Preview if you want both environments to work. Do not put API keys in `public/index.html` or any frontend JavaScript.
