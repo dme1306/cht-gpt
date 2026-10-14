@@ -34,10 +34,14 @@ function amount(value) {
   return Number.isFinite(n) ? (negative ? -Math.abs(n) : n) : 0;
 }
 function financialYear(value) {
-  const s = clean(value);
+  const s = clean(value).toUpperCase().replace(/^FY\s*/, '');
   if (!s) return 0;
+  // For ranges such as 2025-26, FY 2025/2026, or 2025-2026,
+  // use the starting year consistently with the dashboard's FY filters.
   const match = s.match(/(?:19|20)\d{2}/);
-  return match ? Number(match[0]) : 0;
+  if (!match) return 0;
+  const year = Number(match[0]);
+  return year >= 1900 && year <= 2200 ? year : 0;
 }
 function monthNumber(value, monthYear) {
   const names = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
@@ -92,6 +96,15 @@ module.exports = async function handler(req, res) {
       month_year: findColumn(headers, ['Month-Year', 'Month Year', 'MonthYear']),
       fy: findColumn(headers, ['Financial Year', 'FinancialYear', 'FY', 'Financial Yr'])
     };
+    if (map.location < 0) {
+      return res.status(500).json({ error: 'Could not find the Location column. Check the first row of the Google Sheet for a Location header.' });
+    }
+    if (map.amount < 0) {
+      return res.status(500).json({ error: 'Could not find the expense amount column. Expected Expensebal or an equivalent amount header.' });
+    }
+    if (map.fy < 0 && map.month_year < 0 && map.month < 0) {
+      return res.status(500).json({ error: 'Could not find a date column. Expected Financial Year, Month-Year, or MONTH.' });
+    }
     const rows = [];
     for (const row of values.slice(1)) {
       const get = name => map[name] >= 0 ? row[map[name]] : '';
