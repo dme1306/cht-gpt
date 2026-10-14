@@ -62,6 +62,10 @@ function serviceAccountAuth() {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  const expectedKey = process.env.DASHBOARD_ACCESS_KEY;
+  if (!expectedKey) return res.status(503).json({ error: 'Dashboard is not configured yet. Set DASHBOARD_ACCESS_KEY in Vercel environment variables.' });
+  const suppliedKey = req.headers['x-dashboard-key'];
+  if (typeof suppliedKey !== 'string' || suppliedKey !== expectedKey) return res.status(401).json({ error: 'Access denied. Enter the dashboard access key and refresh.' });
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed. Use GET.' });
   try {
     const auth = serviceAccountAuth();
