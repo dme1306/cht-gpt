@@ -1,0 +1,8 @@
+{
+  "name": "crius-expense-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Crius Life Science expense dashboard migrated from Google Apps Script to Vercel serverless APIs",
+  "engines": { "node": ">=20" },
+  "dependencies": { "googleapis": "^144.0.0" }
+}
