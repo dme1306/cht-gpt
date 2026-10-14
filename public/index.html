@@ -1445,7 +1445,8 @@ function loadInitial(isRefresh) {
       hideBanner();
       applyClientFilters();
     })
-    .catch(err => { const btn = document.getElementById('refreshBtn'); if (btn) { btn.disabled = false; btn.textContent = '↻'; } showBanner('<b>Server error:</b> ' + esc(err.message || String(err)), 'danger'); });
+    .catch(err => { const btn = document.getElementById('refreshBtn'); if (btn) { btn.disabled = false; btn.textContent = '↻'; } if (/access denied/i.test(err.message || String(err))) { try { window.localStorage.removeItem('criusDashboardAccessKey'); } catch (e) {} }
+      showBanner('<b>Server error:</b> ' + esc(err.message || String(err)), 'danger'); });
 }
 
 function populateFY(years) {
